@@ -1,17 +1,39 @@
 package main
 
 type Config struct {
-	Port int `json:"port"`
+	Address string        `json:"address"`
+	Port    int           `json:"port"`
+	Routes  []RouteConfig `json:"routes"`
+}
+
+type RouteConfig struct {
+	Static *StaticRouteConfig `json:"static"`
+	Proxy  *ProxyRouteConfig  `json:"proxy"`
+}
+
+type StaticRouteConfig struct {
+	Path    string            `json:"path"`
+	Prefix  string            `json:"prefix"`
+	NoCache bool              `json:"noCache"`
+	Headers map[string]string `json:"headers"`
+}
+
+type ProxyRouteConfig struct {
+	Prefix      string `json:"prefix"`
+	Target      string `json:"target"`
+	Concurrency int    `json:"concurrency"`
 }
 
 func defaultConfig() *Config {
 	return &Config{
-		Port: 8080,
+		Address: "127.0.0.1",
+		Port:    8080,
 	}
 }
 
 func blankConfig() *Config {
 	return &Config{
-		Port: -1,
+		Address: "",
+		Port:    -1,
 	}
 }
