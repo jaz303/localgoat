@@ -1,0 +1,21 @@
+{
+    "port": 1234,
+    "routes": [
+        {
+            "static": {
+                "path": "www",
+                "prefix": "/",
+                "noCache": true,
+                "headers": {
+                    "X-Powered-By": "The Local Goat"
+                }
+            }
+        },
+        {
+            "proxy": {
+                "prefix": "/",
+                "target": "http://localhost:4000"
+            }
+        }
+    ]
+}
