@@ -17,6 +17,10 @@ func NewStaticHandler(c *StaticRouteConfig) *StaticHandler {
 	return &StaticHandler{c}
 }
 
+func (h *StaticHandler) Start() {
+
+}
+
 func (h *StaticHandler) TryServe(w http.ResponseWriter, r *http.Request) bool {
 	if !strings.HasPrefix(r.URL.Path, h.config.Prefix) {
 		return false

@@ -32,6 +32,9 @@ func main() {
 	cfg := loadConfig()
 
 	routes := getRoutes(cfg)
+	for _, route := range routes {
+		route.Start()
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
