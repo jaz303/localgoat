@@ -1,14 +1,37 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 )
 
-var routes []Handler
+func loadConfig() *Config {
+	f, _ := os.Open("config.example.json")
+	data, _ := ioutil.ReadAll(f)
+	cfg := Config{}
+	json.Unmarshal(data, &cfg)
+	return &cfg
+}
+
+func getRoutes(cfg *Config) []Handler {
+	out := make([]Handler, 0)
+	for _, r := range cfg.Routes {
+		if r.Static != nil {
+			out = append(out, NewStaticHandler(r.Static))
+		} else if r.Proxy != nil {
+			out = append(out, NewProxyHandler(r.Proxy))
+		}
+	}
+	return out
+}
 
 func main() {
-	cfg := defaultConfig()
+	cfg := loadConfig()
+
+	routes := getRoutes(cfg)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

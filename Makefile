@@ -1,4 +1,6 @@
-lg:
+SRC := $(shell find . -name '*.go')
+
+lg: $(SRC)
 	go build -o $@
 
 clean:
