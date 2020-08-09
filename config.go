@@ -26,13 +26,6 @@ type ProxyRouteConfig struct {
 	Concurrency int    `json:"concurrency"`
 }
 
-func defaultConfig() *Config {
-	return &Config{
-		Address: "127.0.0.1",
-		Port:    8080,
-	}
-}
-
 func blankConfig() *Config {
 	return &Config{
 		Address: "",

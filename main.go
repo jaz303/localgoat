@@ -1,21 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 )
-
-func loadConfig() *Config {
-	f, _ := os.Open("config.example.json")
-	data, _ := ioutil.ReadAll(f)
-	cfg := Config{}
-	json.Unmarshal(data, &cfg)
-	return &cfg
-}
 
 func getRoutes(cfg *Config) []Handler {
 	out := make([]Handler, 0)
@@ -30,7 +19,7 @@ func getRoutes(cfg *Config) []Handler {
 }
 
 func main() {
-	cfg := loadConfig()
+	cfg := getConfiguration()
 
 	routes := getRoutes(cfg)
 	for _, route := range routes {
@@ -44,8 +33,7 @@ func main() {
 				return
 			}
 		}
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("Not Found"))
+		writeNotFound(w)
 	})
 
 	http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.Address, cfg.Port), mux)
