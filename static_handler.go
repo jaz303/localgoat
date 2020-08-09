@@ -33,17 +33,17 @@ func (h *StaticHandler) TryServe(w http.ResponseWriter, r *http.Request) (bool, 
 	targetFile, err := h.resolvePath(r.URL.Path)
 	if err == errIllegalStaticPath {
 		writeNotFound(w)
-		return true, "illegal path"
+		return true, "static: illegal path"
 	} else if err != nil {
 		writeInteralServerError(w)
-		return true, fmt.Sprintf("error: %v", err)
+		return true, fmt.Sprintf("static: %v", err)
 	}
 
 	stat, err := os.Stat(targetFile)
 	if err != nil {
 		if h.config.Exclusive {
 			writeNotFound(w)
-			return true, "file not found"
+			return true, "static: file not found"
 		} else {
 			return false, ""
 		}
@@ -52,7 +52,7 @@ func (h *StaticHandler) TryServe(w http.ResponseWriter, r *http.Request) (bool, 
 	// TODO: implement directory indexes and index files
 	if stat.IsDir() {
 		writeNotFound(w)
-		return true, "can't serve directory"
+		return true, "static: can't serve directory"
 	}
 
 	io, err := os.Open(targetFile)
@@ -69,7 +69,7 @@ func (h *StaticHandler) TryServe(w http.ResponseWriter, r *http.Request) (bool, 
 
 	http.ServeContent(w, r, path.Base(r.URL.Path), stat.ModTime(), io)
 
-	return true, fmt.Sprintf("serve file %s", targetFile)
+	return true, fmt.Sprintf("static: serve %s", targetFile)
 }
 
 func (h *StaticHandler) resolvePath(p string) (string, error) {

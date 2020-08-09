@@ -39,5 +39,5 @@ func (h *ProxyHandler) TryServe(w http.ResponseWriter, r *http.Request) (bool, s
 	}
 
 	h.proxy.ServeHTTP(w, r)
-	return true, fmt.Sprintf("proxy to %s%s", h.config.Target, r.URL.Path)
+	return true, fmt.Sprintf("proxy: %s%s", h.config.Target, r.URL.Path)
 }
