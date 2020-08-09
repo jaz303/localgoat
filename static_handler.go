@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path"
@@ -28,35 +29,35 @@ func (h *StaticHandler) Prefix() string {
 	return h.config.Prefix
 }
 
-func (h *StaticHandler) TryServe(w http.ResponseWriter, r *http.Request) bool {
+func (h *StaticHandler) TryServe(w http.ResponseWriter, r *http.Request) (bool, string) {
 	targetFile, err := h.resolvePath(r.URL.Path)
 	if err == errIllegalStaticPath {
 		writeNotFound(w)
-		return true
+		return true, "illegal path"
 	} else if err != nil {
 		writeInteralServerError(w)
-		return true
+		return true, fmt.Sprintf("error: %v", err)
 	}
 
 	stat, err := os.Stat(targetFile)
 	if err != nil {
 		if h.config.Exclusive {
 			writeNotFound(w)
-			return true
+			return true, "file not found"
 		} else {
-			return false
+			return false, ""
 		}
 	}
 
 	// TODO: implement directory indexes and index files
 	if stat.IsDir() {
 		writeNotFound(w)
-		return true
+		return true, "can't serve directory"
 	}
 
 	io, err := os.Open(targetFile)
 	if err != nil {
-		return false
+		return false, ""
 	}
 	defer io.Close()
 
@@ -68,7 +69,7 @@ func (h *StaticHandler) TryServe(w http.ResponseWriter, r *http.Request) bool {
 
 	http.ServeContent(w, r, path.Base(r.URL.Path), stat.ModTime(), io)
 
-	return true
+	return true, fmt.Sprintf("serve file %s", targetFile)
 }
 
 func (h *StaticHandler) resolvePath(p string) (string, error) {

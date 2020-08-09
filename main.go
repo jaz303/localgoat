@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/felixge/httpsnoop"
 )
@@ -20,6 +21,27 @@ func getRoutes(cfg *Config) []Handler {
 	return out
 }
 
+var (
+	messages    map[*http.Request]string = make(map[*http.Request]string)
+	messageLock sync.Mutex
+)
+
+func setMessage(r *http.Request, msg string) {
+	messageLock.Lock()
+	defer messageLock.Unlock()
+	messages[r] = msg
+}
+
+func getMessage(r *http.Request) string {
+	messageLock.Lock()
+	defer messageLock.Unlock()
+	msg, ok := messages[r]
+	if ok {
+		delete(messages, r)
+	}
+	return msg
+}
+
 func main() {
 	cfg := getConfiguration()
 
@@ -31,7 +53,12 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		for _, route := range routes {
-			if strings.HasPrefix(r.URL.Path, route.Prefix()) && route.TryServe(w, r) {
+			if !strings.HasPrefix(r.URL.Path, route.Prefix()) {
+				continue
+			}
+			ok, msg := route.TryServe(w, r)
+			if ok {
+				setMessage(r, msg)
 				return
 			}
 		}
@@ -43,6 +70,6 @@ func main() {
 
 	http.ListenAndServe(addr, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		m := httpsnoop.CaptureMetrics(mux, w, r)
-		fmt.Printf("%d %s %s\n", m.Code, r.Method, r.URL.Path)
+		fmt.Printf("%d %s %s (%s)\n", m.Code, r.Method, r.URL.Path, getMessage(r))
 	}))
 }

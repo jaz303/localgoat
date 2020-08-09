@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -32,11 +33,11 @@ func (h *ProxyHandler) Prefix() string {
 	return h.config.Prefix
 }
 
-func (h *ProxyHandler) TryServe(w http.ResponseWriter, r *http.Request) bool {
+func (h *ProxyHandler) TryServe(w http.ResponseWriter, r *http.Request) (bool, string) {
 	if !strings.HasPrefix(r.URL.Path, h.config.Prefix) {
-		return false
+		return false, ""
 	}
 
 	h.proxy.ServeHTTP(w, r)
-	return true
+	return true, fmt.Sprintf("proxy to %s%s", h.config.Target, r.URL.Path)
 }
