@@ -12,10 +12,12 @@ type RouteConfig struct {
 }
 
 type StaticRouteConfig struct {
-	Path    string            `json:"path"`
-	Prefix  string            `json:"prefix"`
-	NoCache bool              `json:"noCache"`
-	Headers map[string]string `json:"headers"`
+	Path        string            `json:"path"`
+	Prefix      string            `json:"prefix"`
+	NoCache     bool              `json:"noCache"`
+	Exclusive   bool              `json:"exclusive"`
+	StripPrefix bool              `json:"stripPrefix"`
+	Headers     map[string]string `json:"headers"`
 }
 
 type ProxyRouteConfig struct {

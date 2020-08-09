@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 	"os"
 	"path"
@@ -13,6 +14,8 @@ type StaticHandler struct {
 
 var _ Handler = &StaticHandler{}
 
+var errIllegalStaticPath = errors.New("illegal path")
+
 func NewStaticHandler(c *StaticRouteConfig) *StaticHandler {
 	return &StaticHandler{c}
 }
@@ -21,16 +24,34 @@ func (h *StaticHandler) Start() {
 
 }
 
-func (h *StaticHandler) TryServe(w http.ResponseWriter, r *http.Request) bool {
-	if !strings.HasPrefix(r.URL.Path, h.config.Prefix) {
-		return false
-	}
+func (h *StaticHandler) Prefix() string {
+	return h.config.Prefix
+}
 
-	targetFile := path.Join(h.config.Path, r.URL.Path)
+func (h *StaticHandler) TryServe(w http.ResponseWriter, r *http.Request) bool {
+	targetFile, err := h.resolvePath(r.URL.Path)
+	if err == errIllegalStaticPath {
+		writeNotFound(w)
+		return true
+	} else if err != nil {
+		writeInteralServerError(w)
+		return true
+	}
 
 	stat, err := os.Stat(targetFile)
 	if err != nil {
-		return false
+		if h.config.Exclusive {
+			writeNotFound(w)
+			return true
+		} else {
+			return false
+		}
+	}
+
+	// TODO: implement directory indexes and index files
+	if stat.IsDir() {
+		writeNotFound(w)
+		return true
 	}
 
 	io, err := os.Open(targetFile)
@@ -48,4 +69,16 @@ func (h *StaticHandler) TryServe(w http.ResponseWriter, r *http.Request) bool {
 	http.ServeContent(w, r, path.Base(r.URL.Path), stat.ModTime(), io)
 
 	return true
+}
+
+func (h *StaticHandler) resolvePath(p string) (string, error) {
+	if strings.Contains(p, "..") {
+		return "", errIllegalStaticPath
+	}
+
+	if h.config.StripPrefix {
+		p = p[len(h.Prefix()):]
+	}
+
+	return path.Join(h.config.Path, p), nil
 }

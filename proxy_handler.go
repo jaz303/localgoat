@@ -28,6 +28,10 @@ func (h *ProxyHandler) Start() {
 	h.proxy = httputil.NewSingleHostReverseProxy(target)
 }
 
+func (h *ProxyHandler) Prefix() string {
+	return h.config.Prefix
+}
+
 func (h *ProxyHandler) TryServe(w http.ResponseWriter, r *http.Request) bool {
 	if !strings.HasPrefix(r.URL.Path, h.config.Prefix) {
 		return false

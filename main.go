@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func loadConfig() *Config {
@@ -39,7 +40,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		for _, route := range routes {
-			if route.TryServe(w, r) {
+			if strings.HasPrefix(r.URL.Path, route.Prefix()) && route.TryServe(w, r) {
 				return
 			}
 		}
