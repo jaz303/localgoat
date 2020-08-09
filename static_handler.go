@@ -51,8 +51,7 @@ func (h *StaticHandler) TryServe(w http.ResponseWriter, r *http.Request) (bool, 
 
 	// TODO: implement directory indexes and index files
 	if stat.IsDir() {
-		writeNotFound(w)
-		return true, "static: can't serve directory"
+		return false, ""
 	}
 
 	io, err := os.Open(targetFile)
