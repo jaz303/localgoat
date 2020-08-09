@@ -9,13 +9,13 @@ import (
 	"github.com/felixge/httpsnoop"
 )
 
-func getRoutes(cfg *Config) []Handler {
-	out := make([]Handler, 0)
+func getRoutes(cfg *Config) []Route {
+	out := make([]Route, 0)
 	for _, r := range cfg.Routes {
 		if r.Static != nil {
-			out = append(out, NewStaticHandler(r.Static))
+			out = append(out, Route{NewStaticHandler(r.Static), r.Terminal})
 		} else if r.Proxy != nil {
-			out = append(out, NewProxyHandler(r.Proxy))
+			out = append(out, Route{NewProxyHandler(r.Proxy), r.Terminal})
 		}
 	}
 	return out
@@ -60,6 +60,8 @@ func main() {
 			if ok {
 				setMessage(r, msg)
 				return
+			} else if route.Terminal {
+				break
 			}
 		}
 		writeNotFound(w)
