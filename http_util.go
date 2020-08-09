@@ -1,6 +1,8 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+)
 
 func writeHeaders(w http.ResponseWriter, hs map[string]string) {
 	for h, v := range hs {

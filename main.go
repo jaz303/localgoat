@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/felixge/httpsnoop"
 )
 
 func getRoutes(cfg *Config) []Handler {
@@ -36,5 +38,11 @@ func main() {
 		writeNotFound(w)
 	})
 
-	http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.Address, cfg.Port), mux)
+	addr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
+	fmt.Printf("localgoat starting, listening on %s\n", addr)
+
+	http.ListenAndServe(addr, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		m := httpsnoop.CaptureMetrics(mux, w, r)
+		fmt.Printf("%d %s %s\n", m.Code, r.Method, r.URL.Path)
+	}))
 }
