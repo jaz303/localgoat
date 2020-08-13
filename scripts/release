@@ -13,11 +13,7 @@ if [ -z "${VERSION}" ]; then
 fi
 
 rm -rf dist
-echo <<-SRC
-package main
-
-var localgoatVersion = "${VERSION}"
-SRC >> version.go
+echo "package main\n\nvar localgoatVersion = \"${VERSION}\"\n" >> version.go
 
 # git tag -a "v${VERSION}" -m "Release v${VERSION}"
 # git push origin master --tags
