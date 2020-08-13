@@ -13,8 +13,13 @@ if [ -z "${VERSION}" ]; then
 fi
 
 rm -rf dist
-echo "package main\n\nvar localgoatVersion = \"${VERSION}\"\n" >> version.go
+echo "package main
 
+var localgoatVersion = \"${VERSION}\"
+" > version.go
+
+# git add version.go
+# git commit -m "v${VERSION}"
 # git tag -a "v${VERSION}" -m "Release v${VERSION}"
 # git push origin master --tags
 
