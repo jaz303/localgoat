@@ -13,7 +13,7 @@ if [ -z "${VERSION}" ]; then
 fi
 
 rm -rf dist
-echo <<SRC
+echo <<-SRC
 package main
 
 var localgoatVersion = "${VERSION}"
