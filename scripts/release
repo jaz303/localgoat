@@ -1,0 +1,25 @@
+#!/bin/bash
+
+if [ ! -z "$(git status --porcelain)" ]; then 
+    echo "Working directory not clean"
+    exit 1
+fi
+
+VERSION=$1
+
+if [ -z "${VERSION}" ]; then
+    echo "Version must be specified"
+    exit 1
+fi
+
+rm -rf dist
+echo <<SRC
+package main
+
+var localgoatVersion = "${VERSION}"
+SRC >> version.go
+
+# git tag -a "v${VERSION}" -m "Release v${VERSION}"
+# git push origin master --tags
+
+# goreleaser release
