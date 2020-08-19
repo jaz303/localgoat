@@ -12,6 +12,7 @@ import (
 type StaticHandler struct {
 	prefix string
 	config *StaticRouteConfig
+	spa    bool
 }
 
 var _ Handler = &StaticHandler{}
@@ -19,15 +20,25 @@ var _ Handler = &StaticHandler{}
 var errIllegalStaticPath = errors.New("illegal path")
 
 func NewStaticHandler(c *RouteConfig) *StaticHandler {
-	return &StaticHandler{c.Prefix, c.Static}
+	stat, err := os.Stat(c.Static.Path)
+	if err != nil {
+		// TODO: error
+	}
+	return &StaticHandler{c.Prefix, c.Static, !stat.IsDir()}
 }
 
 func (h *StaticHandler) TryServe(w http.ResponseWriter, r *http.Request) (Action, string) {
-	targetFile, err := h.resolvePath(r.URL.Path)
-	if err == errIllegalStaticPath {
-		return NotFound, "static: illegal path"
-	} else if err != nil {
-		return InternalServerError, fmt.Sprintf("static: %v", err)
+	var targetFile string
+	if h.spa {
+		targetFile = h.config.Path
+	} else {
+		resolved, err := h.resolvePath(r.URL.Path)
+		if err == errIllegalStaticPath {
+			return NotFound, "static: illegal path"
+		} else if err != nil {
+			return InternalServerError, fmt.Sprintf("static: %v", err)
+		}
+		targetFile = resolved
 	}
 
 	stat, err := os.Stat(targetFile)
