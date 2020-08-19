@@ -10,6 +10,7 @@ import (
 )
 
 type StaticHandler struct {
+	prefix string
 	config *StaticRouteConfig
 }
 
@@ -17,53 +18,45 @@ var _ Handler = &StaticHandler{}
 
 var errIllegalStaticPath = errors.New("illegal path")
 
-func NewStaticHandler(c *StaticRouteConfig) *StaticHandler {
-	return &StaticHandler{c}
+func NewStaticHandler(c *RouteConfig) *StaticHandler {
+	return &StaticHandler{c.Prefix, c.Static}
 }
 
-func (h *StaticHandler) Start() {
-
-}
-
-func (h *StaticHandler) Prefix() string {
-	return h.config.Prefix
-}
-
-func (h *StaticHandler) TryServe(w http.ResponseWriter, r *http.Request) (bool, string) {
+func (h *StaticHandler) TryServe(w http.ResponseWriter, r *http.Request) (Action, string) {
 	targetFile, err := h.resolvePath(r.URL.Path)
 	if err == errIllegalStaticPath {
-		writeNotFound(w)
-		return true, "static: illegal path"
+		return NotFound, "static: illegal path"
 	} else if err != nil {
-		writeInteralServerError(w)
-		return true, fmt.Sprintf("static: %v", err)
+		return InternalServerError, fmt.Sprintf("static: %v", err)
 	}
 
 	stat, err := os.Stat(targetFile)
 	if err != nil {
-		return false, ""
+		return nil, ""
 	}
 
 	// TODO: implement directory indexes and index files
 	if stat.IsDir() {
-		return false, ""
+		return nil, ""
 	}
 
-	io, err := os.Open(targetFile)
-	if err != nil {
-		return false, ""
+	action := &serveFileAction{
+		targetFile,
+		stat,
+		make(map[string]string),
 	}
-	defer io.Close()
-
-	writeHeaders(w, h.config.Headers)
 
 	if h.config.NoCache {
-		thwartCache(w)
+		action.ExtraHeaders["Cache-Control"] = "no-cache, no-store, must-revalidate"
+		action.ExtraHeaders["Pragma"] = "no-cache"
+		action.ExtraHeaders["Expires"] = "0"
 	}
 
-	http.ServeContent(w, r, path.Base(r.URL.Path), stat.ModTime(), io)
+	for h, v := range h.config.Headers {
+		action.ExtraHeaders[h] = v
+	}
 
-	return true, fmt.Sprintf("static: serve %s", targetFile)
+	return action, fmt.Sprintf("static: serve %s", targetFile)
 }
 
 func (h *StaticHandler) resolvePath(p string) (string, error) {
@@ -72,7 +65,7 @@ func (h *StaticHandler) resolvePath(p string) (string, error) {
 	}
 
 	if h.config.StripPrefix {
-		p = p[len(h.Prefix()):]
+		p = p[len(h.prefix):]
 	}
 
 	return path.Join(h.config.Path, p), nil

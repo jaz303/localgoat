@@ -1,29 +1,32 @@
 package main
 
 type Config struct {
-	Address string        `json:"address"`
-	Port    int           `json:"port"`
-	Routes  []RouteConfig `json:"routes"`
+	Address string                 `json:"address"`
+	Port    int                    `json:"port"`
+	Proxies map[string]ProxyConfig `json:"proxies"`
+	Routes  []RouteConfig          `json:"routes"`
+}
+
+type ProxyConfig struct {
+	Host string `json:"host"`
 }
 
 type RouteConfig struct {
 	Static   *StaticRouteConfig `json:"static"`
 	Proxy    *ProxyRouteConfig  `json:"proxy"`
+	Prefix   string             `json:"prefix"`
 	Terminal bool               `json:"terminal"`
 }
 
 type StaticRouteConfig struct {
 	Path        string            `json:"path"`
-	Prefix      string            `json:"prefix"`
 	NoCache     bool              `json:"noCache"`
 	StripPrefix bool              `json:"stripPrefix"`
 	Headers     map[string]string `json:"headers"`
 }
 
 type ProxyRouteConfig struct {
-	Prefix      string `json:"prefix"`
-	Target      string `json:"target"`
-	Concurrency int    `json:"concurrency"`
+	Target string `json:"target"`
 }
 
 func blankConfig() *Config {

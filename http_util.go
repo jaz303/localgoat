@@ -1,29 +1,37 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
+	"os"
+	"path"
 )
 
-func writeHeaders(w http.ResponseWriter, hs map[string]string) {
-	for h, v := range hs {
+func writeStatus(w http.ResponseWriter, statusCode int, message string) {
+	w.WriteHeader(statusCode)
+	w.Write([]byte(message))
+}
+
+func serveFile(w http.ResponseWriter, r *http.Request, file string, stat os.FileInfo, extraHeaders map[string]string) {
+	if stat == nil {
+		s, err := os.Stat(file)
+		if err != nil {
+			writeStatus(w, http.StatusInternalServerError, fmt.Sprintf("Stat file failed: %v", err))
+			return
+		}
+		stat = s
+	}
+
+	io, err := os.Open(file)
+	if err != nil {
+		writeStatus(w, http.StatusInternalServerError, fmt.Sprintf("Open file failed: %v", err))
+		return
+	}
+	defer io.Close()
+
+	for h, v := range extraHeaders {
 		w.Header().Add(h, v)
 	}
-}
 
-func writeNotFound(w http.ResponseWriter) {
-	w.WriteHeader(http.StatusNotFound)
-	w.Write([]byte("Not Found"))
-}
-
-func writeInteralServerError(w http.ResponseWriter) {
-	w.WriteHeader(http.StatusInternalServerError)
-	w.Write([]byte("Internal Server Error"))
-}
-
-func thwartCache(w http.ResponseWriter) {
-	writeHeaders(w, map[string]string{
-		"Cache-Control": "no-cache, no-store, must-revalidate",
-		"Pragma":        "no-cache",
-		"Expires":       "0",
-	})
+	http.ServeContent(w, r, path.Base(r.URL.Path), stat.ModTime(), io)
 }

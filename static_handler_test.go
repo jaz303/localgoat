@@ -23,10 +23,12 @@ func TestResolveStaticPath(t *testing.T) {
 	}
 
 	for ix, c := range cases {
-		h := NewStaticHandler(&StaticRouteConfig{
-			Path:        c.root,
-			Prefix:      c.prefix,
-			StripPrefix: c.strip,
+		h := NewStaticHandler(&RouteConfig{
+			Static: &StaticRouteConfig{
+				Path:        c.root,
+				StripPrefix: c.strip,
+			},
+			Prefix: c.prefix,
 		})
 
 		result, _ := h.resolvePath(c.path)
