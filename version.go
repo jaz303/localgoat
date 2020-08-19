@@ -1,4 +1,4 @@
 package main
 
-var localgoatVersion = "0.0.5"
+var localgoatVersion = "0.9.0"
 
